@@ -68,6 +68,56 @@ DATE_FORMATS = {
 }
 
 
+def _bootstrap_alembic_version(app):
+    """Stamp alembic_version for databases that predate Flask-Migrate.
+
+    Early versions of May created tables via db.create_all() without
+    Flask-Migrate. When those users upgrade, `alembic_version` is either
+    missing or empty, so `flask db upgrade` tries to replay migrations
+    from scratch and fails on `duplicate column` errors. Columns that
+    later migrations add therefore never land, and the app crashes
+    at startup (see issues #132, #136).
+
+    If we detect an established schema with no alembic revision recorded,
+    stamp the most recent migration whose columns already exist so that
+    subsequent `flask db upgrade` runs only apply genuinely new changes.
+    """
+    from sqlalchemy import text, inspect
+    from flask_migrate import stamp
+
+    inspector = inspect(db.engine)
+    table_names = inspector.get_table_names()
+    if 'users' not in table_names or 'vehicles' not in table_names:
+        return
+
+    with db.engine.begin() as conn:
+        if 'alembic_version' in table_names:
+            current = conn.execute(
+                text('SELECT version_num FROM alembic_version')
+            ).scalar()
+            if current:
+                return
+
+    user_cols = {c['name'] for c in inspector.get_columns('users')}
+    vehicle_cols = {c['name'] for c in inspector.get_columns('vehicles')}
+
+    if 'default_vehicle_id' in user_cols:
+        target = 'a1b2c3d4e5f6'
+    elif 'odometer_unit' in vehicle_cols:
+        target = '613be8af4376'
+    else:
+        target = None
+
+    if target is None:
+        return
+
+    try:
+        stamp(revision=target)
+        app.logger.info(f'Stamped alembic_version to {target} for pre-migration database')
+    except Exception as e:
+        app.logger.warning(f'Could not stamp alembic_version: {e}')
+
+
 def _run_schema_migrations(app):
     """Add missing columns to existing tables.
 
@@ -91,6 +141,7 @@ def _run_schema_migrations(app):
             ('date_format', "VARCHAR(20) DEFAULT 'DD/MM/YYYY'"),
             ('password_reset_token', 'VARCHAR(100)'),
             ('password_reset_expires', 'DATETIME'),
+            ('default_vehicle_id', 'INTEGER REFERENCES vehicles(id)'),
         ],
         'charging_sessions': [
             ('tessie_charge_id', 'VARCHAR(50)'),
@@ -248,6 +299,9 @@ def create_app(config_class=Config):
 
     with app.app_context():
         db.create_all()
+        # Stamp alembic_version for pre-Flask-Migrate databases so future
+        # `flask db upgrade` runs apply only pending migrations.
+        _bootstrap_alembic_version(app)
         # Run schema migrations for new columns on existing tables
         _run_schema_migrations(app)
         # Create default admin user if no users exist
