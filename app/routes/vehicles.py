@@ -54,6 +54,7 @@ def new():
             registration=request.form.get('registration'),
             vin=request.form.get('vin'),
             fuel_type=request.form.get('fuel_type'),
+            secondary_fuel_type=request.form.get('secondary_fuel_type') or None,
             tank_capacity=float(request.form.get('tank_capacity')) if request.form.get('tank_capacity') else None,
             notes=request.form.get('notes')
         )
@@ -178,6 +179,7 @@ def edit(vehicle_id):
         vehicle.registration = request.form.get('registration')
         vehicle.vin = request.form.get('vin')
         vehicle.fuel_type = request.form.get('fuel_type')
+        vehicle.secondary_fuel_type = request.form.get('secondary_fuel_type') or None
         vehicle.tank_capacity = float(request.form.get('tank_capacity')) if request.form.get('tank_capacity') else None
         vehicle.notes = request.form.get('notes')
 

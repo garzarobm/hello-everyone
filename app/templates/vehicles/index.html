@@ -47,13 +47,13 @@
         </div>
         {% else %}
         <div class="h-40 bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center">
-            {% if vehicle.vehicle_type == 'car' %}
+            {% if vehicle.vehicle_type in ('car', 'hatchback', 'station_wagon') %}
             <!-- Car icon -->
             <svg class="h-20 w-20 text-primary-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M8 17a2 2 0 100-4 2 2 0 000 4zm8 0a2 2 0 100-4 2 2 0 000 4z"/>
                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 15V9a2 2 0 012-2h1l1.5-3h7L17 7h1a2 2 0 012 2v6M4 15h1m14 0h1M10 15h4"/>
             </svg>
-            {% elif vehicle.vehicle_type == 'van' %}
+            {% elif vehicle.vehicle_type in ('van', 'pickup') %}
             <!-- Van/Truck icon -->
             <svg class="h-20 w-20 text-primary-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M8 17a2 2 0 100-4 2 2 0 000 4zm10 0a2 2 0 100-4 2 2 0 000 4z"/>
@@ -85,7 +85,7 @@
             </div>
             <p class="text-sm text-gray-500 dark:text-gray-400">{{ vehicle.make or '' }} {{ vehicle.model or '' }} {% if vehicle.year %}({{ vehicle.year }}){% endif %}</p>
             <div class="mt-4 flex items-center justify-between text-sm">
-                <span class="text-gray-500 dark:text-gray-400 capitalize">{{ vehicle.vehicle_type }}</span>
+                <span class="text-gray-500 dark:text-gray-400">{{ vehicle.vehicle_type_label }}</span>
                 <span class="font-medium text-gray-900 dark:text-white">{{ "%.2f"|format(vehicle.get_total_cost()) }} {{ current_user.currency }}</span>
             </div>
         </div>
