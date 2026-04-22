@@ -101,7 +101,9 @@ def _bootstrap_alembic_version(app):
     user_cols = {c['name'] for c in inspector.get_columns('users')}
     vehicle_cols = {c['name'] for c in inspector.get_columns('vehicles')}
 
-    if 'default_vehicle_id' in user_cols:
+    if 'trip_templates' in table_names:
+        target = 'b2c3d4e5f6a7'
+    elif 'default_vehicle_id' in user_cols:
         target = 'a1b2c3d4e5f6'
     elif 'odometer_unit' in vehicle_cols:
         target = '613be8af4376'
