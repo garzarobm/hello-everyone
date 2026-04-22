@@ -246,6 +246,10 @@ class Vehicle(db.Model):
         return self.get_total_fuel_cost() + self.get_total_expense_cost()
 
     @property
+    def vehicle_type_label(self):
+        return dict(VEHICLE_TYPES).get(self.vehicle_type, self.vehicle_type.replace('_', ' ').title())
+
+    @property
     def currency_symbol(self):
         return get_currency_symbol(self.owner.currency if self.owner else None)
 
@@ -709,6 +713,9 @@ VEHICLE_TYPES = [
     ('scooter', _l('Scooter')),
     ('truck', _l('Truck')),
     ('suv', _l('SUV')),
+    ('hatchback', _l('Hatchback')),
+    ('station_wagon', _l('Station Wagon / Estate')),
+    ('pickup', _l('Pickup / Ute')),
     ('tractor', _l('Tractor')),
     ('atv_utv', _l('ATV/UTV')),
     ('boat', _l('Boat')),
