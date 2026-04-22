@@ -181,6 +181,7 @@ class Vehicle(db.Model):
 
     # Fuel info
     fuel_type = db.Column(db.String(20), default='petrol')  # petrol, diesel, electric, hybrid, lpg
+    secondary_fuel_type = db.Column(db.String(20), nullable=True)  # e.g. adblue, lpg
     tank_capacity = db.Column(db.Float)  # in liters
     battery_capacity = db.Column(db.Float)  # in kWh for EVs
 
@@ -369,6 +370,7 @@ class Vehicle(db.Model):
             'registration': self.registration,
             'vin': self.vin,
             'fuel_type': self.fuel_type,
+            'secondary_fuel_type': self.secondary_fuel_type,
             'tank_capacity': self.tank_capacity,
             'is_active': self.is_active,
             'created_at': self.created_at.isoformat() if self.created_at else None,
@@ -419,6 +421,7 @@ class FuelLog(db.Model):
     price_per_unit = db.Column(db.Float)  # price per liter
     total_cost = db.Column(db.Float)
 
+    fuel_type = db.Column(db.String(20), nullable=True)  # overrides vehicle primary; set when vehicle has secondary fuel type
     is_full_tank = db.Column(db.Boolean, default=True)
     is_missed = db.Column(db.Boolean, default=False)  # missed fill-up flag
 

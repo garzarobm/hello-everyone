@@ -5,7 +5,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from app import db
-from app.models import Vehicle, FuelLog, Attachment, FuelStation, FuelPriceHistory
+from app.models import Vehicle, FuelLog, Attachment, FuelStation, FuelPriceHistory, FUEL_TYPES
 from app.security import validate_file_upload, secure_filename_with_uuid, validate_positive_number
 from flask_babel import gettext as _
 from app.services.tessie import TessieService
@@ -84,6 +84,7 @@ def new():
             volume=volume,
             price_per_unit=price_per_unit,
             total_cost=total_cost,
+            fuel_type=request.form.get('fuel_type') or None,
             is_full_tank=request.form.get('is_full_tank') == 'on',
             is_missed=request.form.get('is_missed') == 'on',
             station=request.form.get('station'),
@@ -107,7 +108,7 @@ def new():
                     station_id=station_id,
                     user_id=current_user.id,
                     date=log.date,
-                    fuel_type=vehicle.fuel_type or 'petrol',
+                    fuel_type=log.fuel_type or vehicle.fuel_type or 'petrol',
                     price_per_unit=log.price_per_unit
                 )
                 db.session.add(price_history)
@@ -146,6 +147,7 @@ def new():
                            log=None,
                            vehicles=vehicles,
                            stations=stations,
+                           fuel_types=FUEL_TYPES,
                            selected_vehicle_id=selected_vehicle_id)
 
 
@@ -176,6 +178,7 @@ def edit(log_id):
         log.volume = float(request.form.get('volume')) if request.form.get('volume') else None
         log.price_per_unit = float(request.form.get('price_per_unit')) if request.form.get('price_per_unit') else None
         log.total_cost = float(request.form.get('total_cost')) if request.form.get('total_cost') else None
+        log.fuel_type = request.form.get('fuel_type') or None
         log.is_full_tank = request.form.get('is_full_tank') == 'on'
         log.is_missed = request.form.get('is_missed') == 'on'
         log.station = request.form.get('station')
@@ -208,7 +211,7 @@ def edit(log_id):
                             station_id=station_id,
                             user_id=current_user.id,
                             date=log.date,
-                            fuel_type=log.vehicle.fuel_type or 'petrol',
+                            fuel_type=log.fuel_type or log.vehicle.fuel_type or 'petrol',
                             price_per_unit=log.price_per_unit
                         ))
 
@@ -241,6 +244,7 @@ def edit(log_id):
                            log=log,
                            vehicles=vehicles,
                            stations=stations,
+                           fuel_types=FUEL_TYPES,
                            selected_vehicle_id=log.vehicle_id)
 
 
