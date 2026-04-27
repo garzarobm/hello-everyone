@@ -365,6 +365,83 @@
 </div>
 {% endif %}
 
+<!-- Annual Mileage Tracker -->
+{% if annual_mileage_stats %}
+{% set ms = annual_mileage_stats %}
+<div class="bg-white dark:bg-gray-800 shadow rounded-lg mb-8">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+        <div class="flex items-center">
+            <svg class="h-5 w-5 text-gray-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+            </svg>
+            <h2 class="text-lg font-medium text-gray-900 dark:text-white">{{ _('Annual Mileage') }}</h2>
+        </div>
+        <div class="flex items-center gap-2">
+            {% if ms.over_limit %}
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                {{ _('Over limit') }}
+            </span>
+            {% elif ms.progress_pct >= 90 %}
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
+                {{ _('Approaching limit') }}
+            </span>
+            {% elif ms.on_pace %}
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                {{ _('On pace') }}
+            </span>
+            {% else %}
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                {{ _('Over pace') }}
+            </span>
+            {% endif %}
+            <a href="{{ url_for('vehicles.edit', vehicle_id=vehicle.id) }}" class="text-sm text-primary-600 hover:text-primary-500">{{ _('Edit') }}</a>
+        </div>
+    </div>
+
+    <div class="px-6 py-5">
+        <!-- Progress bars -->
+        <div class="mb-4">
+            <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
+                <span>{{ _('Distance') }}: {{ "{:,}".format(ms.driven) }} / {{ "{:,}".format(ms.limit|int) }} {{ vehicle.get_effective_odometer_unit() }}</span>
+                <span>{{ ms.progress_pct }}%</span>
+            </div>
+            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 relative overflow-hidden">
+                <!-- Time elapsed marker -->
+                <div class="absolute top-0 bottom-0 w-0.5 bg-gray-400 dark:bg-gray-500 z-10" style="left: {{ ms.time_pct }}%;" title="{{ _('Time elapsed') }}: {{ ms.time_pct }}%"></div>
+                <!-- Distance progress -->
+                <div class="h-3 rounded-full transition-all {% if ms.over_limit %}bg-red-500{% elif ms.progress_pct >= 90 %}bg-amber-500{% else %}bg-primary-500{% endif %}"
+                     style="width: {{ ms.progress_pct }}%;"></div>
+            </div>
+            <div class="flex justify-between text-xs text-gray-400 dark:text-gray-500 mt-1">
+                <span>{{ ms.period_start|format_date }}</span>
+                <span class="text-gray-500 dark:text-gray-400" title="{{ _('Time elapsed') }}">▲ {{ ms.time_pct }}% {{ _('of year elapsed') }}</span>
+                <span>{{ ms.period_end|format_date }}</span>
+            </div>
+        </div>
+
+        <!-- Stats grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
+            <div class="text-center">
+                <p class="text-2xl font-semibold text-gray-900 dark:text-white">{{ "{:,}".format(ms.remaining) }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ vehicle.get_effective_odometer_unit() }} {{ _('remaining') }}</p>
+            </div>
+            <div class="text-center">
+                <p class="text-2xl font-semibold text-gray-900 dark:text-white">{{ ms.days_remaining }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ _('days remaining') }}</p>
+            </div>
+            <div class="text-center">
+                <p class="text-2xl font-semibold {% if not ms.on_pace and not ms.over_limit %}text-red-600 dark:text-red-400{% else %}text-gray-900 dark:text-white{% endif %}">{{ "{:,}".format(ms.projected) }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ _('projected year-end') }}</p>
+            </div>
+            <div class="text-center">
+                <p class="text-2xl font-semibold text-gray-900 dark:text-white">{{ "{:,}".format(ms.expected) }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ _('expected at this point') }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <!-- Reminders Section -->
 {% if reminders %}
 <div class="bg-white dark:bg-gray-800 shadow rounded-lg mb-8">

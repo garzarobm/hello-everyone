@@ -56,7 +56,9 @@ def new():
             fuel_type=request.form.get('fuel_type'),
             secondary_fuel_type=request.form.get('secondary_fuel_type') or None,
             tank_capacity=float(request.form.get('tank_capacity')) if request.form.get('tank_capacity') else None,
-            notes=request.form.get('notes')
+            notes=request.form.get('notes'),
+            annual_mileage_limit=float(request.form.get('annual_mileage_limit')) if request.form.get('annual_mileage_limit') else None,
+            annual_mileage_start_date=datetime.strptime(request.form.get('annual_mileage_start_date'), '%Y-%m-%d').date() if request.form.get('annual_mileage_start_date') else None,
         )
 
         # Handle image upload
@@ -155,7 +157,8 @@ def view(vehicle_id):
                            parts=parts,
                            part_types=PART_TYPES,
                            dvla_configured=dvla_configured,
-                           tessie_configured=tessie_configured)
+                           tessie_configured=tessie_configured,
+                           annual_mileage_stats=vehicle.get_annual_mileage_stats())
 
 
 @bp.route('/<int:vehicle_id>/edit', methods=['GET', 'POST'])
@@ -182,6 +185,8 @@ def edit(vehicle_id):
         vehicle.secondary_fuel_type = request.form.get('secondary_fuel_type') or None
         vehicle.tank_capacity = float(request.form.get('tank_capacity')) if request.form.get('tank_capacity') else None
         vehicle.notes = request.form.get('notes')
+        vehicle.annual_mileage_limit = float(request.form.get('annual_mileage_limit')) if request.form.get('annual_mileage_limit') else None
+        vehicle.annual_mileage_start_date = datetime.strptime(request.form.get('annual_mileage_start_date'), '%Y-%m-%d').date() if request.form.get('annual_mileage_start_date') else None
 
         # Handle Tessie integration fields
         vehicle.tessie_vin = request.form.get('tessie_vin') or None

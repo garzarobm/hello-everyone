@@ -211,6 +211,10 @@ class Vehicle(db.Model):
     tessie_battery_range = db.Column(db.Float)  # Last fetched range in km
     tessie_last_updated = db.Column(db.DateTime)  # When Tessie data was last fetched
 
+    # Annual mileage tracking
+    annual_mileage_limit = db.Column(db.Float, nullable=True)
+    annual_mileage_start_date = db.Column(db.Date, nullable=True)
+
     # Relationships
     fuel_logs = db.relationship('FuelLog', backref='vehicle', lazy='dynamic',
                                 cascade='all, delete-orphan')
@@ -357,6 +361,86 @@ class Vehicle(db.Model):
     def is_electric(self):
         """Check if vehicle is electric or plug-in hybrid"""
         return self.fuel_type in ('electric', 'plugin_hybrid', 'hybrid')
+
+    def get_annual_mileage_stats(self):
+        """Return mileage tracking stats for the current annual period, or None if not configured."""
+        if not self.annual_mileage_limit or not self.annual_mileage_start_date:
+            return None
+
+        from datetime import date as date_type
+
+        today = date_type.today()
+        limit = self.annual_mileage_limit
+        start = self.annual_mileage_start_date
+
+        # Find the most recent anniversary of start that is <= today
+        period_year = today.year
+        try:
+            candidate = start.replace(year=period_year)
+        except ValueError:
+            candidate = start.replace(year=period_year, day=28)
+        if candidate > today:
+            period_year -= 1
+            try:
+                candidate = start.replace(year=period_year)
+            except ValueError:
+                candidate = start.replace(year=period_year, day=28)
+        period_start = candidate
+
+        try:
+            period_end = start.replace(year=period_year + 1)
+        except ValueError:
+            period_end = start.replace(year=period_year + 1, day=28)
+
+        days_total = (period_end - period_start).days
+        days_elapsed = max(0, (today - period_start).days)
+        days_remaining = max(0, (period_end - today).days)
+
+        # Baseline: last odometer reading before this period
+        baseline_log = (self.fuel_logs
+                        .filter(FuelLog.date < period_start)
+                        .order_by(FuelLog.date.desc(), FuelLog.odometer.desc())
+                        .first())
+        current_log = (self.fuel_logs
+                       .order_by(FuelLog.date.desc(), FuelLog.odometer.desc())
+                       .first())
+
+        if not current_log:
+            driven = 0.0
+        elif baseline_log:
+            driven = max(0.0, current_log.odometer - baseline_log.odometer)
+        else:
+            first_log = (self.fuel_logs
+                         .filter(FuelLog.date >= period_start)
+                         .order_by(FuelLog.date.asc(), FuelLog.odometer.asc())
+                         .first())
+            if first_log and current_log.id != first_log.id:
+                driven = max(0.0, current_log.odometer - first_log.odometer)
+            else:
+                driven = 0.0
+
+        remaining = max(0.0, limit - driven)
+        progress_pct = min(100.0, round(driven / limit * 100, 1)) if limit > 0 else 0.0
+        time_pct = round(days_elapsed / days_total * 100, 1) if days_total > 0 else 0.0
+        expected = round(limit / days_total * days_elapsed) if days_total > 0 else 0
+        projected = round(driven / days_elapsed * days_total) if days_elapsed > 0 else 0
+
+        return {
+            'limit': limit,
+            'period_start': period_start,
+            'period_end': period_end,
+            'days_total': days_total,
+            'days_elapsed': days_elapsed,
+            'days_remaining': days_remaining,
+            'driven': round(driven),
+            'remaining': round(remaining),
+            'projected': projected,
+            'on_pace': projected <= limit,
+            'over_limit': driven >= limit,
+            'progress_pct': progress_pct,
+            'time_pct': time_pct,
+            'expected': expected,
+        }
 
     def to_dict(self):
         """Serialize vehicle to dictionary for API"""
