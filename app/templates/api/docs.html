@@ -34,18 +34,18 @@
                 </p>
 
                 <h3 class="font-medium text-gray-900 dark:text-white mt-6 mb-2">Option 1: Authorization Header (Recommended)</h3>
-                <div class="bg-gray-900 rounded-lg p-4 overflow-x-auto">
-                    <code class="text-green-400 text-sm">Authorization: Bearer may_your_api_key_here</code>
+                <div class="bg-gray-100 dark:bg-gray-900 rounded-lg p-4 overflow-x-auto">
+                    <code class="text-green-700 dark:text-green-400 text-sm">Authorization: Bearer may_your_api_key_here</code>
                 </div>
 
                 <h3 class="font-medium text-gray-900 dark:text-white mt-6 mb-2">Option 2: X-API-Key Header</h3>
-                <div class="bg-gray-900 rounded-lg p-4 overflow-x-auto">
-                    <code class="text-green-400 text-sm">X-API-Key: may_your_api_key_here</code>
+                <div class="bg-gray-100 dark:bg-gray-900 rounded-lg p-4 overflow-x-auto">
+                    <code class="text-green-700 dark:text-green-400 text-sm">X-API-Key: may_your_api_key_here</code>
                 </div>
 
                 <h3 class="font-medium text-gray-900 dark:text-white mt-6 mb-2">Example Request</h3>
-                <div class="bg-gray-900 rounded-lg p-4 overflow-x-auto">
-<pre class="text-green-400 text-sm"><code>curl -X GET "{{ request.host_url }}api/v1/vehicles" \
+                <div class="bg-gray-100 dark:bg-gray-900 rounded-lg p-4 overflow-x-auto">
+<pre class="text-green-700 dark:text-green-400 text-sm"><code>curl -X GET "{{ request.host_url }}api/v1/vehicles" \
   -H "Authorization: Bearer may_your_api_key_here"</code></pre>
                 </div>
             </div>
@@ -78,8 +78,8 @@
                     <p class="text-gray-600 dark:text-gray-400 mb-4">List all vehicles you have access to (owned and shared)</p>
 
                     <h4 class="font-medium text-gray-900 dark:text-white mb-2">Response</h4>
-                    <div class="bg-gray-900 rounded-lg p-4 overflow-x-auto">
-<pre class="text-green-400 text-sm"><code>{
+                    <div class="bg-gray-100 dark:bg-gray-900 rounded-lg p-4 overflow-x-auto">
+<pre class="text-green-700 dark:text-green-400 text-sm"><code>{
   "vehicles": [
     {
       "id": 1,
@@ -155,8 +155,8 @@
                     </div>
 
                     <h4 class="font-medium text-gray-900 dark:text-white mt-6 mb-2">Example</h4>
-                    <div class="bg-gray-900 rounded-lg p-4 overflow-x-auto">
-<pre class="text-green-400 text-sm"><code>curl -X POST "{{ request.host_url }}api/v1/vehicles" \
+                    <div class="bg-gray-100 dark:bg-gray-900 rounded-lg p-4 overflow-x-auto">
+<pre class="text-green-700 dark:text-green-400 text-sm"><code>curl -X POST "{{ request.host_url }}api/v1/vehicles" \
   -H "Authorization: Bearer may_your_api_key" \
   -H "Content-Type: application/json" \
   -d '{
@@ -231,8 +231,8 @@
                     </div>
 
                     <h4 class="font-medium text-gray-900 dark:text-white mt-6 mb-2">Response</h4>
-                    <div class="bg-gray-900 rounded-lg p-4 overflow-x-auto">
-<pre class="text-green-400 text-sm"><code>{
+                    <div class="bg-gray-100 dark:bg-gray-900 rounded-lg p-4 overflow-x-auto">
+<pre class="text-green-700 dark:text-green-400 text-sm"><code>{
   "fuel_logs": [
     {
       "id": 1,
@@ -294,8 +294,8 @@
                     </div>
 
                     <h4 class="font-medium text-gray-900 dark:text-white mt-6 mb-2">Example</h4>
-                    <div class="bg-gray-900 rounded-lg p-4 overflow-x-auto">
-<pre class="text-green-400 text-sm"><code>curl -X POST "{{ request.host_url }}api/v1/vehicles/1/fuel" \
+                    <div class="bg-gray-100 dark:bg-gray-900 rounded-lg p-4 overflow-x-auto">
+<pre class="text-green-700 dark:text-green-400 text-sm"><code>curl -X POST "{{ request.host_url }}api/v1/vehicles/1/fuel" \
   -H "Authorization: Bearer may_your_api_key" \
   -H "Content-Type: application/json" \
   -d '{
@@ -435,8 +435,8 @@
             </div>
             <div class="p-6">
                 <h4 class="font-medium text-gray-900 dark:text-white mb-2">Error Response Format</h4>
-                <div class="bg-gray-900 rounded-lg p-4 overflow-x-auto mb-6">
-<pre class="text-green-400 text-sm"><code>{
+                <div class="bg-gray-100 dark:bg-gray-900 rounded-lg p-4 overflow-x-auto mb-6">
+<pre class="text-green-700 dark:text-green-400 text-sm"><code>{
   "error": "Human-readable error message",
   "code": "error_code"
 }</code></pre>

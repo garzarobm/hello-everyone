@@ -96,17 +96,7 @@
         Object.entries(primaryPalette).forEach(([key, value]) => {
             rootStyle.setProperty(`--primary-${key}`, value);
         });
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        primary: primaryPalette
-                    }
-                }
-            }
-        };
-        window.tailwind.config = tailwind.config;
+        window.__primaryPalette = primaryPalette;
     </script>
     <script>
         window.__loadTailwindFallback = function() {
@@ -120,6 +110,18 @@
         };
     </script>
     <script src="{{ TAILWIND_ASSET_URL }}" onerror="window.__loadTailwindFallback()"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: window.__primaryPalette
+                    }
+                }
+            }
+        };
+    </script>
     <!-- HTMX - Non-critical, deferred, local with CDN fallback -->
     <script>
         window.__loadHtmxFallback = function() {
