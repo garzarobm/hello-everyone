@@ -1,6 +1,7 @@
 import pytest
+from datetime import date
 from app import db
-from app.models import Expense
+from app.models import Expense, EXPENSE_CATEGORIES
 
 
 class TestExpenseIndex:
@@ -98,3 +99,56 @@ class TestExpenseDelete:
         resp = auth_client.post(f'/expenses/{expense_id}/delete', follow_redirects=True)
         assert resp.status_code == 200
         assert Expense.query.get(expense_id) is None
+
+
+class TestExpenseCategories:
+    def test_inspection_category_exists(self):
+        category_keys = [k for k, _ in EXPENSE_CATEGORIES]
+        assert 'inspection' in category_keys
+
+    def test_create_inspection_expense(self, auth_client, sample_vehicle):
+        resp = auth_client.post('/expenses/new', data={
+            'vehicle_id': str(sample_vehicle.id),
+            'date': '2024-03-01',
+            'category': 'inspection',
+            'description': 'Annual MOT inspection',
+            'cost': '55.00',
+        }, follow_redirects=True)
+        assert resp.status_code == 200
+        expense = Expense.query.filter_by(description='Annual MOT inspection').first()
+        assert expense is not None
+        assert expense.category == 'inspection'
+
+    def test_expense_list_shows_odometer(self, auth_client, test_user, sample_vehicle):
+        expense = Expense(
+            vehicle_id=sample_vehicle.id,
+            user_id=test_user.id,
+            date=date(2024, 3, 1),
+            category='maintenance',
+            description='Oil change with odometer',
+            cost=40.0,
+            odometer=12345.0,
+        )
+        db.session.add(expense)
+        db.session.commit()
+        resp = auth_client.get('/expenses/')
+        assert resp.status_code == 200
+        assert b'12345' in resp.data
+
+    def test_expense_list_shows_expandable_details(self, auth_client, test_user, sample_vehicle):
+        expense = Expense(
+            vehicle_id=sample_vehicle.id,
+            user_id=test_user.id,
+            date=date(2024, 3, 2),
+            category='repairs',
+            description='Brake pads',
+            cost=120.0,
+            vendor='AutoShop Ltd',
+            notes='Front brakes replaced',
+        )
+        db.session.add(expense)
+        db.session.commit()
+        resp = auth_client.get('/expenses/')
+        assert resp.status_code == 200
+        assert b'AutoShop Ltd' in resp.data
+        assert b'Front brakes replaced' in resp.data

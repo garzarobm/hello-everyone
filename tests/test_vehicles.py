@@ -123,3 +123,85 @@ class TestVehicleArchive:
         resp = auth_client.get('/vehicles/?archived=true')
         assert resp.status_code == 200
         assert b'Test Car' in resp.data
+
+
+class TestVehicleSharing:
+    def test_is_shared_defaults_false(self, sample_vehicle):
+        assert sample_vehicle.is_shared is False
+
+    def test_shared_vehicle_visible_to_other_user(self, app, test_user, sample_vehicle):
+        from app.models import User
+        other = User(username='other_user', email='other@example.com')
+        other.set_password('OtherPass123!')
+        db.session.add(other)
+        db.session.commit()
+
+        # Not shared yet — other user should not see it
+        assert sample_vehicle not in other.get_all_vehicles()
+
+        # Mark as shared
+        sample_vehicle.is_shared = True
+        db.session.commit()
+
+        assert sample_vehicle in other.get_all_vehicles()
+
+    def test_edit_vehicle_sets_is_shared(self, auth_client, sample_vehicle):
+        resp = auth_client.post(f'/vehicles/{sample_vehicle.id}/edit', data={
+            'name': sample_vehicle.name,
+            'vehicle_type': sample_vehicle.vehicle_type,
+            'fuel_type': sample_vehicle.fuel_type,
+            'tracking_unit': 'mileage',
+            'is_active': 'on',
+            'is_shared': 'on',
+        }, follow_redirects=True)
+        assert resp.status_code == 200
+        db.session.refresh(sample_vehicle)
+        assert sample_vehicle.is_shared is True
+
+    def test_edit_vehicle_clears_is_shared(self, auth_client, sample_vehicle):
+        sample_vehicle.is_shared = True
+        db.session.commit()
+
+        resp = auth_client.post(f'/vehicles/{sample_vehicle.id}/edit', data={
+            'name': sample_vehicle.name,
+            'vehicle_type': sample_vehicle.vehicle_type,
+            'fuel_type': sample_vehicle.fuel_type,
+            'tracking_unit': 'mileage',
+            'is_active': 'on',
+            # is_shared omitted → checkbox unchecked
+        }, follow_redirects=True)
+        assert resp.status_code == 200
+        db.session.refresh(sample_vehicle)
+        assert sample_vehicle.is_shared is False
+
+    def test_shared_badge_shown_in_vehicle_list(self, auth_client, sample_vehicle):
+        sample_vehicle.is_shared = True
+        db.session.commit()
+        resp = auth_client.get('/vehicles/')
+        assert resp.status_code == 200
+        assert b'Shared' in resp.data
+
+
+class TestVehicleViewMaintenancePanel:
+    def test_view_shows_maintenance_panel(self, auth_client, app, test_user, sample_vehicle):
+        from app.models import MaintenanceSchedule
+        from datetime import date, timedelta
+        schedule = MaintenanceSchedule(
+            vehicle_id=sample_vehicle.id,
+            user_id=test_user.id,
+            name='Oil Change',
+            maintenance_type='oil_change',
+            next_due_date=date.today() + timedelta(days=15),
+            is_active=True,
+        )
+        db.session.add(schedule)
+        db.session.commit()
+        resp = auth_client.get(f'/vehicles/{sample_vehicle.id}')
+        assert resp.status_code == 200
+        assert b'Upcoming Maintenance' in resp.data
+        assert b'Oil Change' in resp.data
+
+    def test_view_hides_maintenance_panel_when_empty(self, auth_client, sample_vehicle):
+        resp = auth_client.get(f'/vehicles/{sample_vehicle.id}')
+        assert resp.status_code == 200
+        assert b'Upcoming Maintenance' not in resp.data

@@ -22,7 +22,7 @@ def upgrade():
         batch_op.drop_index(batch_op.f('ix_charging_sessions_tessie_charge_id'))
 
     with op.batch_alter_table('vehicles', schema=None) as batch_op:
-        batch_op.add_column(sa.Column('is_shared', sa.Boolean(), nullable=False))
+        batch_op.add_column(sa.Column('is_shared', sa.Boolean(), nullable=False, server_default=sa.false()))
 
     # ### end Alembic commands ###
 
