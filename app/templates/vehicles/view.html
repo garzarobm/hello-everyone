@@ -99,7 +99,7 @@
 
 <!-- Quick Actions -->
 <div class="flex flex-wrap gap-3 mb-8">
-    {% if not vehicle.uses_tessie_odometer() %}
+    {% if vehicle.uses_fuel() and not vehicle.uses_tessie_odometer() %}
     <a href="{{ url_for('fuel.new', vehicle_id=vehicle.id) }}"
        class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-yellow-500 hover:bg-yellow-600">
         <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -108,7 +108,7 @@
         {{ _('Add Fuel Log') }}
     </a>
     {% endif %}
-    {% if vehicle.is_electric() %}
+    {% if vehicle.uses_charging() %}
     <a href="{{ url_for('charging.new', vehicle_id=vehicle.id) }}"
        class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-500 hover:bg-green-600">
         <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

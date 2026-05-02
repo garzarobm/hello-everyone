@@ -359,8 +359,16 @@ class Vehicle(db.Model):
         return None
 
     def is_electric(self):
-        """Check if vehicle is electric or plug-in hybrid"""
+        """Check if vehicle uses any electric propulsion"""
         return self.fuel_type in ('electric', 'plugin_hybrid', 'hybrid')
+
+    def uses_charging(self):
+        """Check if vehicle can be plugged in for charging (pure EV or plug-in hybrid)"""
+        return self.fuel_type in ('electric', 'plugin_hybrid')
+
+    def uses_fuel(self):
+        """Check if vehicle uses liquid fuel (not pure electric)"""
+        return self.fuel_type != 'electric'
 
     def get_annual_mileage_stats(self):
         """Return mileage tracking stats for the current annual period, or None if not configured."""
