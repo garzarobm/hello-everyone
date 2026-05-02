@@ -151,6 +151,7 @@ The main dashboard shows an overview of all your vehicles with key statistics:
 - Total fuel costs and consumption averages
 - Recent fuel logs and expenses
 - Upcoming reminders and overdue alerts
+- Vehicle photo cards showing make/model/year and fuel type at a glance
 
 ### Vehicles
 Add and manage your vehicles with detailed information:
@@ -158,6 +159,9 @@ Add and manage your vehicles with detailed information:
 - Fuel type and tank capacity
 - Custom specifications and notes
 - Photo upload support
+- **Vehicle Sharing**: Mark a vehicle as "Shared" to make it visible and loggable by all users on the instance
+- **Upcoming Maintenance**: Vehicle detail pages show a live panel of scheduled maintenance tasks, with overdue and due-soon alerts
+- **Parts & Consumables**: Collapsible section on the vehicle page remembers your expand/collapse preference per vehicle
 
 ### Fuel Logs
 Track every fill-up with:
@@ -169,11 +173,14 @@ Track every fill-up with:
 ### Expenses
 Categorize all vehicle-related costs:
 - Maintenance & Repairs
+- Inspection (MOT, roadworthy checks)
 - Insurance
 - Tax & Registration
 - Parking & Tolls
 - Accessories
 - Other expenses
+
+Record odometer readings alongside costs, and expand any expense row to see vendor and notes details inline.
 
 ### Reminders
 Never miss important dates:
@@ -202,9 +209,9 @@ Track regular payments:
 Store important vehicle documents:
 - Insurance certificates
 - Registration documents
-- Service manuals
+- Service manuals and instruction booklets (up to 300MB)
 - MOT certificates
-- Any file type with expiry date tracking
+- Any file type (PDF, images, Word, Excel, text, ePub) with expiry date tracking
 
 ### Fuel Stations
 Save your favorite stations:

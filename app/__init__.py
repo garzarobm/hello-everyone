@@ -138,6 +138,8 @@ def _run_schema_migrations(app):
             ('tessie_battery_range', 'FLOAT'),
             ('tessie_last_updated', 'DATETIME'),
             ('tracking_unit', "VARCHAR(20) DEFAULT 'mileage'"),
+            ('annual_mileage_limit', 'FLOAT'),
+            ('annual_mileage_start_date', 'DATE'),
         ],
         'users': [
             ('date_format', "VARCHAR(20) DEFAULT 'DD/MM/YYYY'"),

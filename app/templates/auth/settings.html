@@ -947,8 +947,8 @@
 
                                 <div>
                                     <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-2">{{ _('REST Sensor Configuration') }}</h4>
-                                    <div class="bg-gray-900 rounded-lg p-4 overflow-x-auto">
-                                        <pre class="text-sm text-gray-100"><code>sensor:
+                                    <div class="bg-gray-100 dark:bg-gray-900 rounded-lg p-4 overflow-x-auto">
+                                        <pre class="text-sm text-gray-800 dark:text-gray-100"><code>sensor:
   - platform: rest
     name: "May Vehicle Stats"
     resource: {{ request.url_root.rstrip('/') }}/api/ha/summary

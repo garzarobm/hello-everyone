@@ -99,7 +99,7 @@
 
 <!-- Quick Actions -->
 <div class="flex flex-wrap gap-3 mb-8">
-    {% if not vehicle.uses_tessie_odometer() %}
+    {% if vehicle.uses_fuel() and not vehicle.uses_tessie_odometer() %}
     <a href="{{ url_for('fuel.new', vehicle_id=vehicle.id) }}"
        class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-yellow-500 hover:bg-yellow-600">
         <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -108,7 +108,7 @@
         {{ _('Add Fuel Log') }}
     </a>
     {% endif %}
-    {% if vehicle.is_electric() %}
+    {% if vehicle.uses_charging() %}
     <a href="{{ url_for('charging.new', vehicle_id=vehicle.id) }}"
        class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-500 hover:bg-green-600">
         <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -365,6 +365,83 @@
 </div>
 {% endif %}
 
+<!-- Annual Mileage Tracker -->
+{% if annual_mileage_stats %}
+{% set ms = annual_mileage_stats %}
+<div class="bg-white dark:bg-gray-800 shadow rounded-lg mb-8">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+        <div class="flex items-center">
+            <svg class="h-5 w-5 text-gray-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+            </svg>
+            <h2 class="text-lg font-medium text-gray-900 dark:text-white">{{ _('Annual Mileage') }}</h2>
+        </div>
+        <div class="flex items-center gap-2">
+            {% if ms.over_limit %}
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                {{ _('Over limit') }}
+            </span>
+            {% elif ms.progress_pct >= 90 %}
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
+                {{ _('Approaching limit') }}
+            </span>
+            {% elif ms.on_pace %}
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                {{ _('On pace') }}
+            </span>
+            {% else %}
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                {{ _('Over pace') }}
+            </span>
+            {% endif %}
+            <a href="{{ url_for('vehicles.edit', vehicle_id=vehicle.id) }}" class="text-sm text-primary-600 hover:text-primary-500">{{ _('Edit') }}</a>
+        </div>
+    </div>
+
+    <div class="px-6 py-5">
+        <!-- Progress bars -->
+        <div class="mb-4">
+            <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
+                <span>{{ _('Distance') }}: {{ "{:,}".format(ms.driven) }} / {{ "{:,}".format(ms.limit|int) }} {{ vehicle.get_effective_odometer_unit() }}</span>
+                <span>{{ ms.progress_pct }}%</span>
+            </div>
+            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 relative overflow-hidden">
+                <!-- Time elapsed marker -->
+                <div class="absolute top-0 bottom-0 w-0.5 bg-gray-400 dark:bg-gray-500 z-10" style="left: {{ ms.time_pct }}%;" title="{{ _('Time elapsed') }}: {{ ms.time_pct }}%"></div>
+                <!-- Distance progress -->
+                <div class="h-3 rounded-full transition-all {% if ms.over_limit %}bg-red-500{% elif ms.progress_pct >= 90 %}bg-amber-500{% else %}bg-primary-500{% endif %}"
+                     style="width: {{ ms.progress_pct }}%;"></div>
+            </div>
+            <div class="flex justify-between text-xs text-gray-400 dark:text-gray-500 mt-1">
+                <span>{{ ms.period_start|format_date }}</span>
+                <span class="text-gray-500 dark:text-gray-400" title="{{ _('Time elapsed') }}">▲ {{ ms.time_pct }}% {{ _('of year elapsed') }}</span>
+                <span>{{ ms.period_end|format_date }}</span>
+            </div>
+        </div>
+
+        <!-- Stats grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
+            <div class="text-center">
+                <p class="text-2xl font-semibold text-gray-900 dark:text-white">{{ "{:,}".format(ms.remaining) }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ vehicle.get_effective_odometer_unit() }} {{ _('remaining') }}</p>
+            </div>
+            <div class="text-center">
+                <p class="text-2xl font-semibold text-gray-900 dark:text-white">{{ ms.days_remaining }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ _('days remaining') }}</p>
+            </div>
+            <div class="text-center">
+                <p class="text-2xl font-semibold {% if not ms.on_pace and not ms.over_limit %}text-red-600 dark:text-red-400{% else %}text-gray-900 dark:text-white{% endif %}">{{ "{:,}".format(ms.projected) }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ _('projected year-end') }}</p>
+            </div>
+            <div class="text-center">
+                <p class="text-2xl font-semibold text-gray-900 dark:text-white">{{ "{:,}".format(ms.expected) }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ _('expected at this point') }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <!-- Reminders Section -->
 {% if reminders %}
 <div class="bg-white dark:bg-gray-800 shadow rounded-lg mb-8">
@@ -475,17 +552,77 @@
 </div>
 {% endif %}
 
-<!-- Parts & Consumables -->
+{% if maintenance_schedules %}
+<!-- Upcoming Maintenance -->
 <div class="bg-white dark:bg-gray-800 shadow rounded-lg mb-8">
     <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
         <div class="flex items-center">
             <svg class="h-5 w-5 text-gray-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
             </svg>
-            <h2 class="text-lg font-medium text-gray-900 dark:text-white">{{ _('Parts & Consumables') }}</h2>
+            <h2 class="text-lg font-medium text-gray-900 dark:text-white">{{ _('Upcoming Maintenance') }}</h2>
+        </div>
+        <a href="{{ url_for('maintenance.index') }}?vehicle_id={{ vehicle.id }}" class="text-sm text-primary-600 hover:text-primary-500">{{ _('View all') }}</a>
+    </div>
+    <ul class="divide-y divide-gray-200 dark:divide-gray-700">
+        {% for schedule in maintenance_schedules[:5] %}
+        {% set is_overdue = schedule.next_due_date and schedule.next_due_date < today %}
+        {% set is_due_soon = schedule.next_due_date and not is_overdue and (schedule.next_due_date - today).days <= 30 %}
+        <li class="px-6 py-3">
+            <div class="flex items-center justify-between gap-4">
+                <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ schedule.name }}</span>
+                        {% if is_overdue %}
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400">{{ _('Overdue') }}</span>
+                        {% elif is_due_soon %}
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400">{{ _('Due soon') }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="flex items-center gap-3 mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                        {% if schedule.next_due_date %}
+                        <span>{{ schedule.next_due_date|format_date }}</span>
+                        {% endif %}
+                        {% if schedule.next_due_odometer %}
+                        <span>{{ schedule.next_due_odometer|int }} {{ vehicle.get_effective_odometer_unit() }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if schedule.next_due_date and schedule.last_performed_date %}
+                {% set total_days = (schedule.next_due_date - schedule.last_performed_date).days %}
+                {% set elapsed_days = (today - schedule.last_performed_date).days %}
+                {% set pct = [[(elapsed_days / total_days * 100) if total_days > 0 else 100, 0]|max, 100]|min %}
+                <div class="w-24 flex-shrink-0">
+                    <div class="h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+                        <div class="h-full rounded-full {% if is_overdue %}bg-red-500{% elif is_due_soon %}bg-yellow-400{% else %}bg-green-500{% endif %}"
+                             style="width: {{ pct }}%"></div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<!-- Parts & Consumables -->
+<div class="bg-white dark:bg-gray-800 shadow rounded-lg mb-8" id="parts-section">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+            <button onclick="toggleParts()" class="flex items-center gap-2 text-left" title="{{ _('Toggle section') }}">
+                <svg id="parts-chevron" class="h-4 w-4 text-gray-400 transition-transform duration-150" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+                <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
+                </svg>
+                <h2 class="text-lg font-medium text-gray-900 dark:text-white">{{ _('Parts & Consumables') }}</h2>
+            </button>
         </div>
         <a href="{{ url_for('vehicles.parts', vehicle_id=vehicle.id) }}" class="text-sm text-primary-600 hover:text-primary-500">{{ _('View all') }}</a>
     </div>
+    <div id="parts-body">
     {% if parts %}
     <ul class="divide-y divide-gray-200 dark:divide-gray-700">
         {% for part in parts[:6] %}
@@ -536,7 +673,26 @@
         </a>
     </div>
     {% endif %}
+    </div><!-- end parts-body -->
 </div>
+
+<script>
+(function() {
+    const key = 'parts-collapsed-{{ vehicle.id }}';
+    const body = document.getElementById('parts-body');
+    const chevron = document.getElementById('parts-chevron');
+    if (localStorage.getItem(key) === '1') {
+        body.classList.add('hidden');
+        chevron.style.transform = 'rotate(-90deg)';
+    }
+    window.toggleParts = function() {
+        const collapsed = !body.classList.contains('hidden');
+        body.classList.toggle('hidden', collapsed);
+        chevron.style.transform = collapsed ? 'rotate(-90deg)' : '';
+        localStorage.setItem(key, collapsed ? '1' : '0');
+    };
+})();
+</script>
 
 <!-- Consumption Chart -->
 <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-8">
