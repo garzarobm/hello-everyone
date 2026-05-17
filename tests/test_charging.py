@@ -35,6 +35,75 @@ def sample_session(app, test_user, ev_vehicle):
     return session
 
 
+class TestEVStats:
+    """#175 — EV cost/consumption stats must include charging."""
+
+    def test_total_cost_includes_charging(self, app, test_user, ev_vehicle):
+        # Pure EV: no fuel logs, but two charging sessions
+        ev_vehicle.odometer_unit = 'km'
+        db.session.commit()
+        db.session.add_all([
+            ChargingSession(vehicle_id=ev_vehicle.id, user_id=test_user.id,
+                            date=date(2026, 4, 1), odometer=10000, kwh_added=30, total_cost=6.0),
+            ChargingSession(vehicle_id=ev_vehicle.id, user_id=test_user.id,
+                            date=date(2026, 4, 15), odometer=10500, kwh_added=40, total_cost=8.0),
+        ])
+        db.session.commit()
+        assert ev_vehicle.get_total_cost() == 14.0
+
+    def test_average_charging_consumption_km(self, app, test_user, ev_vehicle):
+        ev_vehicle.odometer_unit = 'km'
+        db.session.commit()
+        db.session.add_all([
+            ChargingSession(vehicle_id=ev_vehicle.id, user_id=test_user.id,
+                            date=date(2026, 4, 1), odometer=10000, kwh_added=30),
+            ChargingSession(vehicle_id=ev_vehicle.id, user_id=test_user.id,
+                            date=date(2026, 4, 15), odometer=10500, kwh_added=40),
+        ])
+        db.session.commit()
+        # 70 kWh over 500 km = 14 kWh / 100 km
+        consumption = ev_vehicle.get_average_charging_consumption()
+        assert consumption is not None
+        assert abs(consumption - 14.0) < 0.01
+
+    def test_average_charging_consumption_mi_to_km(self, app, test_user, ev_vehicle):
+        """Vehicle in miles, asked for kWh/100km — must convert."""
+        ev_vehicle.odometer_unit = 'mi'
+        db.session.commit()
+        db.session.add_all([
+            ChargingSession(vehicle_id=ev_vehicle.id, user_id=test_user.id,
+                            date=date(2026, 4, 1), odometer=10000, kwh_added=30),
+            ChargingSession(vehicle_id=ev_vehicle.id, user_id=test_user.id,
+                            date=date(2026, 4, 15), odometer=10500, kwh_added=40),
+        ])
+        db.session.commit()
+        # 70 kWh over 500 mi = 804.672 km → ~8.70 kWh/100km
+        consumption = ev_vehicle.get_average_charging_consumption('km')
+        assert consumption is not None
+        assert abs(consumption - 8.70) < 0.05
+
+    def test_cost_per_kwh(self, app, test_user, ev_vehicle):
+        db.session.add_all([
+            ChargingSession(vehicle_id=ev_vehicle.id, user_id=test_user.id,
+                            date=date(2026, 4, 1), kwh_added=30, total_cost=9.0),
+            ChargingSession(vehicle_id=ev_vehicle.id, user_id=test_user.id,
+                            date=date(2026, 4, 15), kwh_added=20, total_cost=4.0),
+        ])
+        db.session.commit()
+        # 13 / 50 = 0.26
+        assert abs(ev_vehicle.get_cost_per_kwh() - 0.26) < 0.001
+
+    def test_no_sessions_returns_none(self, app, test_user, ev_vehicle):
+        assert ev_vehicle.get_average_charging_consumption() is None
+        assert ev_vehicle.get_cost_per_kwh() is None
+
+    def test_fuel_index_lists_charging(self, auth_client, sample_session):
+        resp = auth_client.get('/fuel/')
+        assert resp.status_code == 200
+        assert b'Charging History' in resp.data
+        assert b'Tesla Model 3' in resp.data
+
+
 class TestChargingIndex:
     def test_index_requires_auth(self, client):
         resp = client.get('/charging/', follow_redirects=False)

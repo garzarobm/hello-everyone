@@ -252,7 +252,7 @@ class Vehicle(db.Model):
         return sum(exp.cost for exp in self.expenses.all() if exp.cost)
 
     def get_total_cost(self):
-        return self.get_total_fuel_cost() + self.get_total_expense_cost()
+        return self.get_total_fuel_cost() + self.get_total_expense_cost() + self.get_total_charging_cost()
 
     @property
     def vehicle_type_label(self):
@@ -369,6 +369,43 @@ class Vehicle(db.Model):
     def get_total_charging_cost(self):
         """Get total cost of all charging sessions"""
         return sum(session.total_cost for session in self.charging_sessions.all() if session.total_cost) or 0
+
+    def get_total_charging_kwh(self):
+        """Total energy delivered across all charging sessions (kWh)."""
+        return sum(s.kwh_added for s in self.charging_sessions.all() if s.kwh_added) or 0
+
+    def get_average_charging_consumption(self, distance_unit=None):
+        """Mean energy consumption between the first and last charging sessions
+        that have odometer readings.
+
+        Returns kWh per 100 distance units in ``distance_unit`` (falls back to
+        the vehicle's odometer unit). Mirrors the fill-to-fill approach used
+        for fuel: needs at least two anchor sessions with odometers, and sums
+        every charge in between.
+        """
+        sessions = (self.charging_sessions
+                    .filter(ChargingSession.odometer.isnot(None))
+                    .order_by(ChargingSession.odometer)
+                    .all())
+        if len(sessions) < 2:
+            return None
+        first_odo, last_odo = sessions[0].odometer, sessions[-1].odometer
+        raw_distance = last_odo - first_odo
+        if raw_distance <= 0:
+            return None
+        total_kwh = sum(s.kwh_added for s in sessions if s.kwh_added) or 0
+        if total_kwh <= 0:
+            return None
+        target = distance_unit or self.get_effective_odometer_unit()
+        distance = _distance_in(raw_distance, self.get_effective_odometer_unit(), target)
+        return (total_kwh / distance) * 100 if distance > 0 else None
+
+    def get_cost_per_kwh(self):
+        """Average cost per kWh across all charging sessions with data."""
+        total_kwh = self.get_total_charging_kwh()
+        if total_kwh <= 0:
+            return None
+        return self.get_total_charging_cost() / total_kwh
 
     def get_total_trip_distance(self):
         """Get total distance from all trips"""
@@ -909,13 +946,15 @@ REMINDER_TYPES = [
     ('custom', _l('Custom'))
 ]
 
-# Recurrence options
+# Recurrence options. The legacy values (quarterly, biannual) remain accepted on
+# read so saved reminders keep working; new reminders use a unit + interval pair
+# (see Reminder.recurrence_interval).
 RECURRENCE_OPTIONS = [
     ('none', _l('No Repeat')),
-    ('monthly', _l('Monthly')),
-    ('quarterly', _l('Quarterly (3 months)')),
-    ('biannual', _l('Every 6 months')),
-    ('yearly', _l('Yearly')),
+    ('daily', _l('Day(s)')),
+    ('weekly', _l('Week(s)')),
+    ('monthly', _l('Month(s)')),
+    ('yearly', _l('Year(s)')),
 ]
 
 # Trip purposes for tax deductions

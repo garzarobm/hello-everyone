@@ -85,6 +85,7 @@ def new(vehicle_id=None):
             reminder_type=request.form.get('reminder_type'),
             due_date=due_date,
             recurrence=request.form.get('recurrence', 'none'),
+            recurrence_interval=max(int(request.form.get('recurrence_interval') or 1), 1),
             notify_days_before=int(request.form.get('notify_days_before', 7))
         )
 
@@ -137,6 +138,7 @@ def edit(reminder_id):
         reminder.reminder_type = request.form.get('reminder_type')
         reminder.due_date = due_date
         reminder.recurrence = request.form.get('recurrence', 'none')
+        reminder.recurrence_interval = max(int(request.form.get('recurrence_interval') or 1), 1)
         reminder.notify_days_before = int(request.form.get('notify_days_before', 7))
 
         db.session.commit()
@@ -167,7 +169,7 @@ def complete(reminder_id):
 
     # If recurring, create the next occurrence
     if reminder.recurrence != 'none':
-        new_due_date = calculate_next_due_date(reminder.due_date, reminder.recurrence)
+        new_due_date = calculate_next_due_date(reminder.due_date, reminder.recurrence, reminder.recurrence_interval)
         new_reminder = Reminder(
             vehicle_id=reminder.vehicle_id,
             user_id=reminder.user_id,
@@ -176,6 +178,7 @@ def complete(reminder_id):
             reminder_type=reminder.reminder_type,
             due_date=new_due_date,
             recurrence=reminder.recurrence,
+            recurrence_interval=reminder.recurrence_interval,
             notify_days_before=reminder.notify_days_before
         )
         db.session.add(new_reminder)
@@ -239,40 +242,29 @@ def delete(reminder_id):
     return redirect(url_for('reminders.index'))
 
 
-def calculate_next_due_date(current_date, recurrence):
-    """Calculate the next due date based on recurrence"""
+def calculate_next_due_date(current_date, recurrence, interval=1):
+    """Calculate the next due date for the given recurrence unit and interval.
+
+    Accepts the current unit-based vocabulary (daily, weekly, monthly, yearly)
+    and the legacy values (quarterly = 3 months, biannual = 6 months) so old
+    reminders keep working until they're edited.
+    """
+    from dateutil.relativedelta import relativedelta
+
+    step = max(int(interval or 1), 1)
+
+    if recurrence == 'daily':
+        return current_date + relativedelta(days=step)
+    if recurrence == 'weekly':
+        return current_date + relativedelta(weeks=step)
     if recurrence == 'monthly':
-        # Add one month
-        month = current_date.month + 1
-        year = current_date.year
-        if month > 12:
-            month = 1
-            year += 1
-        # Handle day overflow (e.g., Jan 31 -> Feb 28)
-        day = min(current_date.day, 28)  # Safe default
-        return date(year, month, day)
-
-    elif recurrence == 'quarterly':
-        # Add 3 months
-        month = current_date.month + 3
-        year = current_date.year
-        while month > 12:
-            month -= 12
-            year += 1
-        day = min(current_date.day, 28)
-        return date(year, month, day)
-
-    elif recurrence == 'biannual':
-        # Add 6 months
-        month = current_date.month + 6
-        year = current_date.year
-        while month > 12:
-            month -= 12
-            year += 1
-        day = min(current_date.day, 28)
-        return date(year, month, day)
-
-    elif recurrence == 'yearly':
-        return date(current_date.year + 1, current_date.month, current_date.day)
+        return current_date + relativedelta(months=step)
+    if recurrence == 'yearly':
+        return current_date + relativedelta(years=step)
+    # Legacy fixed-interval values from pre-0.22.4 reminders.
+    if recurrence == 'quarterly':
+        return current_date + relativedelta(months=3 * step)
+    if recurrence == 'biannual':
+        return current_date + relativedelta(months=6 * step)
 
     return current_date

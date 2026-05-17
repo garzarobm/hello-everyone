@@ -79,16 +79,25 @@
 
             <!-- Recurrence -->
             <div>
-                <label for="recurrence" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Recurrence</label>
-                <select name="recurrence" id="recurrence"
-                        class="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500">
-                    {% for rec_id, rec_name in recurrence_options %}
-                    <option value="{{ rec_id }}" {% if reminder and reminder.recurrence == rec_id %}selected{% endif %}>
-                        {{ rec_name }}
-                    </option>
-                    {% endfor %}
-                </select>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">When marked complete, a recurring reminder will automatically create the next occurrence</p>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ _('Recurrence') }}</label>
+                <div class="flex gap-2 items-stretch">
+                    <span class="inline-flex items-center px-3 text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 border border-r-0 border-gray-300 dark:border-gray-600 rounded-l-md">
+                        {{ _('Every') }}
+                    </span>
+                    <input type="number" name="recurrence_interval" id="recurrence_interval"
+                           min="1" step="1"
+                           value="{{ reminder.recurrence_interval if reminder and reminder.recurrence_interval else 1 }}"
+                           class="w-20 border-y border-gray-300 dark:border-gray-600 px-3 py-2 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:bg-gray-700 dark:text-white">
+                    <select name="recurrence" id="recurrence"
+                            class="flex-1 rounded-r-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                        {% for rec_id, rec_name in recurrence_options %}
+                        <option value="{{ rec_id }}" {% if reminder and reminder.recurrence == rec_id %}selected{% endif %}>
+                            {{ rec_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ _('e.g. \"Every 2 Year(s)\" for an MOT due every two years. When marked complete, the next occurrence is created automatically.') }}</p>
             </div>
 
             <!-- Notification Days -->

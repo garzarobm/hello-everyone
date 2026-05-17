@@ -118,3 +118,58 @@ class TestReminderComplete:
         assert resp.status_code == 200
         db.session.refresh(sample_reminder)
         assert sample_reminder.is_completed is False
+
+
+class TestReminderFlexibleRecurrence:
+    """#184 — recurrence is now a unit + interval pair (e.g., every 2 years)."""
+
+    def test_create_with_interval(self, auth_client, sample_vehicle):
+        resp = auth_client.post('/reminders/new', data={
+            'vehicle_id': str(sample_vehicle.id),
+            'title': 'French MOT',
+            'reminder_type': 'mot',
+            'due_date': '2025-06-01',
+            'recurrence': 'yearly',
+            'recurrence_interval': '2',
+            'notify_days_before': '14',
+        }, follow_redirects=True)
+        assert resp.status_code == 200
+        r = Reminder.query.filter_by(title='French MOT').first()
+        assert r is not None
+        assert r.recurrence == 'yearly'
+        assert r.recurrence_interval == 2
+
+    def test_complete_uses_interval_for_next_occurrence(self, auth_client, sample_vehicle, test_user):
+        r = Reminder(
+            vehicle_id=sample_vehicle.id, user_id=test_user.id,
+            title='Biennial MOT', reminder_type='mot',
+            due_date=date(2025, 6, 1),
+            recurrence='yearly', recurrence_interval=2,
+        )
+        db.session.add(r)
+        db.session.commit()
+        auth_client.post(f'/reminders/{r.id}/complete', follow_redirects=True)
+        next_r = Reminder.query.filter(Reminder.title == 'Biennial MOT', Reminder.is_completed == False).first()
+        assert next_r is not None
+        assert next_r.due_date == date(2027, 6, 1)
+        assert next_r.recurrence_interval == 2
+
+    def test_legacy_quarterly_still_resolves(self):
+        from app.routes.reminders import calculate_next_due_date
+        # Reminders created before 0.22.4 may have recurrence='quarterly'
+        # and recurrence_interval=1; should still advance by 3 months.
+        next_due = calculate_next_due_date(date(2025, 1, 1), 'quarterly', 1)
+        assert next_due == date(2025, 4, 1)
+
+    def test_legacy_biannual_still_resolves(self):
+        from app.routes.reminders import calculate_next_due_date
+        next_due = calculate_next_due_date(date(2025, 1, 1), 'biannual', 1)
+        assert next_due == date(2025, 7, 1)
+
+    def test_daily_interval(self):
+        from app.routes.reminders import calculate_next_due_date
+        assert calculate_next_due_date(date(2025, 6, 1), 'daily', 10) == date(2025, 6, 11)
+
+    def test_weekly_interval(self):
+        from app.routes.reminders import calculate_next_due_date
+        assert calculate_next_due_date(date(2025, 6, 1), 'weekly', 3) == date(2025, 6, 22)

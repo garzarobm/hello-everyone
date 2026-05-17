@@ -125,12 +125,17 @@ def view(vehicle_id):
     stats = {
         'total_fuel_cost': vehicle.get_total_fuel_cost(),
         'total_expense_cost': vehicle.get_total_expense_cost(),
+        'total_charging_cost': vehicle.get_total_charging_cost(),
+        'total_charging_kwh': vehicle.get_total_charging_kwh(),
+        'avg_charging_consumption': vehicle.get_average_charging_consumption(),
+        'cost_per_kwh': vehicle.get_cost_per_kwh(),
         'total_cost': vehicle.get_total_cost(),
         'total_distance': vehicle.get_total_distance(vehicle.get_effective_odometer_unit()),
         'avg_consumption': vehicle.get_average_consumption(current_user.consumption_unit, current_user.volume_unit),
         'cost_per_distance': vehicle.get_cost_per_distance(),
         'fuel_logs_count': vehicle.fuel_logs.count(),
-        'expenses_count': vehicle.expenses.count()
+        'expenses_count': vehicle.expenses.count(),
+        'charging_sessions_count': vehicle.charging_sessions.count(),
     }
 
     # Get reminders for this vehicle (not completed, ordered by due date)
