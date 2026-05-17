@@ -31,7 +31,16 @@ def index():
         FuelLog.vehicle_id.in_(vehicle_ids)
     ).order_by(FuelLog.date.desc()).all()
 
-    return render_template('fuel/index.html', logs=logs, vehicles=vehicles)
+    # #175 — also surface charging sessions on this page when the user has EVs
+    from app.models import ChargingSession
+    charging_sessions = ChargingSession.query.filter(
+        ChargingSession.vehicle_id.in_(vehicle_ids)
+    ).order_by(ChargingSession.date.desc()).all() if vehicle_ids else []
+
+    return render_template('fuel/index.html',
+                           logs=logs,
+                           vehicles=vehicles,
+                           charging_sessions=charging_sessions)
 
 
 @bp.route('/new', methods=['GET', 'POST'])

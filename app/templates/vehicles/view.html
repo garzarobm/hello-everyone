@@ -70,11 +70,20 @@
 
 <!-- Stats Cards -->
 <div class="grid grid-cols-2 gap-4 sm:grid-cols-5 mb-8">
+    {% if vehicle.uses_fuel() %}
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
         <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ _('Total Fuel Cost') }}</dt>
         <dd class="mt-1 text-xl font-semibold text-gray-900 dark:text-white">{{ "%.2f"|format(stats.total_fuel_cost) }}</dd>
         <dd class="text-sm text-gray-500 dark:text-gray-400">{{ current_user.currency }}</dd>
     </div>
+    {% endif %}
+    {% if vehicle.uses_charging() %}
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ _('Total Charging Cost') }}</dt>
+        <dd class="mt-1 text-xl font-semibold text-gray-900 dark:text-white">{{ "%.2f"|format(stats.total_charging_cost) }}</dd>
+        <dd class="text-sm text-gray-500 dark:text-gray-400">{{ current_user.currency }}</dd>
+    </div>
+    {% endif %}
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
         <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ _('Other Expenses') }}</dt>
         <dd class="mt-1 text-xl font-semibold text-gray-900 dark:text-white">{{ "%.2f"|format(stats.total_expense_cost) }}</dd>
@@ -85,11 +94,20 @@
         <dd class="mt-1 text-xl font-semibold text-gray-900 dark:text-white">{{ "%.0f"|format(stats.total_distance) }}</dd>
         <dd class="text-sm text-gray-500 dark:text-gray-400">{{ vehicle.get_effective_odometer_unit() }}</dd>
     </div>
+    {% if vehicle.uses_fuel() %}
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
         <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ _('Avg. Consumption') }}</dt>
         <dd class="mt-1 text-xl font-semibold text-gray-900 dark:text-white">{% if stats.avg_consumption %}{{ "%.1f"|format(stats.avg_consumption) }}{% else %}-{% endif %}</dd>
         <dd class="text-sm text-gray-500 dark:text-gray-400">{{ current_user.consumption_unit }}</dd>
     </div>
+    {% endif %}
+    {% if vehicle.uses_charging() %}
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ _('Avg. Charging') }}</dt>
+        <dd class="mt-1 text-xl font-semibold text-gray-900 dark:text-white">{% if stats.avg_charging_consumption %}{{ "%.1f"|format(stats.avg_charging_consumption) }}{% else %}-{% endif %}</dd>
+        <dd class="text-sm text-gray-500 dark:text-gray-400">kWh / 100 {{ vehicle.get_effective_odometer_unit() }}</dd>
+    </div>
+    {% endif %}
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
         <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ _('Cost per') }} {{ vehicle.get_effective_odometer_unit() }}</dt>
         <dd class="mt-1 text-xl font-semibold text-gray-900 dark:text-white">{% if stats.cost_per_distance %}{{ "%.2f"|format(stats.cost_per_distance) }}{% else %}-{% endif %}</dd>
@@ -694,6 +712,7 @@
 })();
 </script>
 
+{% if vehicle.uses_fuel() %}
 <!-- Consumption Chart -->
 <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-8">
     <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-4">{{ _('Fuel Consumption Trend') }}</h2>
@@ -701,6 +720,7 @@
         <canvas id="consumptionChart"></canvas>
     </div>
 </div>
+{% endif %}
 
 <!-- Recent Activity -->
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
