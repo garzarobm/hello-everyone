@@ -1,10 +1,9 @@
 services:
-  may_new:
-    image: ghcr.io/dannymcc/may:latest
+  hello-everyone:
+    # image: ghcr.io/dannymcc/may:latest
     # To build locally instead, comment out 'image' above and uncomment:
-    # build: .
-    container_name: may_new
-    restart: unless-stopped
+    build: .
+    container_name: hello-everyone
     ports:
       - "5059:5050"
     volumes:
@@ -14,7 +13,7 @@ services:
       - DATABASE_URL=sqlite:////app/data/may.db
       - UPLOAD_FOLDER=/app/data/uploads
       # Optional: set a fixed admin password (default is auto-generated and shown in logs)
-      - ADMIN_PASSWORD=${SECRET_KEY}
+      # - ADMIN_PASSWORD=${SECRET_KEY}
     
 
 volumes:
