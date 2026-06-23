@@ -3,7 +3,7 @@ services:
     image: ghcr.io/dannymcc/may:latest
     # To build locally instead, comment out 'image' above and uncomment:
     # build: .
-    container_name: may
+    container_name: may-new
     restart: unless-stopped
     ports:
       - "5059:5050"
@@ -17,4 +17,4 @@ services:
       # - ADMIN_PASSWORD=your-secure-password
 
 volumes:
-  may_data:
+  may_new_data:
