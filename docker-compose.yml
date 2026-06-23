@@ -8,13 +8,13 @@ services:
     ports:
       - "5059:5050"
     volumes:
-      - may_data:/app/data
+      - may_new_data:/app/data
     environment:
       - SECRET_KEY=${SECRET_KEY:-change-me-in-production}
       - DATABASE_URL=sqlite:////app/data/may.db
       - UPLOAD_FOLDER=/app/data/uploads
       # Optional: set a fixed admin password (default is auto-generated and shown in logs)
-      # - ADMIN_PASSWORD=your-secure-password
+      - ADMIN_PASSWORD=${SECRET_KEY}
 
 volumes:
   may_new_data:
